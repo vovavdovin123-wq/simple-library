@@ -1,92 +1,94 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+
+	"github.com/vovavdovin123-wq/simple-library/models"
+	"github.com/vovavdovin123-wq/simple-library/storage"
+)
 
 func main() {
-	fmt.Println("Проект 'Простая библиотека' запущен.")
+	library := models.NewLibrary()
 
-	// Создаём пустую библиотеку
-	library := NewLibrary()
-
-	// Добавляем читателей
-	reader1 := &Reader{ID: 1, FirstName: "Петр", LastName: "Петров", IsActive: true}
-	reader2 := &Reader{ID: 2, FirstName: "Sergey", LastName: "Meniaylo", IsActive: true}
-
-	if err := library.AddReader(reader1); err != nil {
-		fmt.Println("ошибка:", err)
-		return
-	}
-	if err := library.AddReader(reader2); err != nil {
+	if err := seedLibrary(library); err != nil {
 		fmt.Println("ошибка:", err)
 		return
 	}
 
-	// Добавляем книги
-	book1 := &Book{ID: 1, Title: "Война и мир", Author: "Лев Толстой", Year: 1869}
-	book2 := &Book{ID: 2, Title: "Преступление и наказание", Author: "Ф. Достоевский", Year: 1866}
-
-	if err := library.AddBook(book1); err != nil {
-		fmt.Println("ошибка:", err)
-		return
-	}
-	if err := library.AddBook(book2); err != nil {
-		fmt.Println("ошибка:", err)
+	if len(os.Args) < 2 {
+		fmt.Println("Использование:")
+		fmt.Println("  go run . list")
+		fmt.Println("  go run . save <имя_файла.csv>")
+		fmt.Println("  go run . load <имя_файла.csv>")
 		return
 	}
 
-	// Попытка добавить ту же книгу ещё раз (такое же название и автор)
-	fmt.Println("--- Дубликат книги ---")
-	duplicate := &Book{ID: 3, Title: "Война и мир", Author: "Лев Толстой", Year: 1869}
-	if err := library.AddBook(duplicate); err != nil {
-		fmt.Println("ошибка:", err)
-	} else {
-		fmt.Println("успех: книга добавлена")
+	command := os.Args[1]
+
+	switch command {
+	case "list":
+		fmt.Println("--- Книги в библиотеке ---")
+		for _, book := range library.ListAllBooks() {
+			fmt.Println(book)
+		}
+
+	case "save":
+		if len(os.Args) != 3 {
+			fmt.Println("Использование: go run . save <имя_файла.csv>")
+			return
+		}
+		path := os.Args[2]
+		if err := storage.SaveBooksToCSV(path, library.ListAllBooks()); err != nil {
+			fmt.Println("ошибка:", err)
+			return
+		}
+		fmt.Println("успех: книги сохранены в", path)
+
+	case "load":
+		if len(os.Args) != 3 {
+			fmt.Println("Использование: go run . load <имя_файла.csv>")
+			return
+		}
+		path := os.Args[2]
+		books, err := storage.LoadBooksFromCSV(path)
+		if err != nil {
+			fmt.Println("ошибка:", err)
+			return
+		}
+		library.ReplaceBooks(books)
+		fmt.Println("успех: книги загружены из", path)
+		fmt.Println("--- Книги после загрузки ---")
+		for _, book := range library.ListAllBooks() {
+			fmt.Println(book)
+		}
+
+	default:
+		fmt.Println("Неизвестная команда:", command)
+	}
+}
+
+func seedLibrary(library *models.Library) error {
+	readers := []*models.Reader{
+		{ID: 1, FirstName: "Петр", LastName: "Петров", IsActive: true},
+		{ID: 2, FirstName: "Sergey", LastName: "Meniaylo", IsActive: true},
+	}
+	for _, reader := range readers {
+		if err := library.AddReader(reader); err != nil {
+			return err
+		}
 	}
 
-	fmt.Println("--- Книги в библиотеке ---")
-	for _, book := range library.ListAllBooks() {
-		fmt.Println(book)
+	books := []*models.Book{
+		{ID: 1, Title: "Война и мир", Author: "Лев Толстой", Year: 1869},
+		{ID: 2, Title: "Преступление и наказание", Author: "Ф. Достоевский", Year: 1866},
+		{ID: 3, Title: "Мастер и Маргарита", Author: "М. Булгаков", Year: 1967},
+	}
+	for _, book := range books {
+		if err := library.AddBook(book); err != nil {
+			return err
+		}
 	}
 
-	// Успешная выдача книги
-	fmt.Println("--- Успешная выдача книги ---")
-	if err := library.IssueBookToReader(1, 1); err != nil {
-		fmt.Println("ошибка:", err)
-	} else {
-		fmt.Println("успех: книга выдана читателю")
-		fmt.Println(book1)
-	}
-
-	// Попытка выдать уже выданную книгу
-	fmt.Println("--- Попытка выдать уже выданную книгу ---")
-	if err := library.IssueBookToReader(1, 2); err != nil {
-		fmt.Println("ошибка:", err)
-	} else {
-		fmt.Println("успех: книга выдана читателю")
-	}
-
-	// Попытка выдать книгу несуществующему читателю
-	fmt.Println("--- Попытка выдать книгу несуществующему читателю ---")
-	if err := library.IssueBookToReader(2, 99); err != nil {
-		fmt.Println("ошибка:", err)
-	} else {
-		fmt.Println("успех: книга выдана читателю")
-	}
-
-	// Успешный возврат книги
-	fmt.Println("--- Успешный возврат книги ---")
-	if err := library.ReturnBookByID(1); err != nil {
-		fmt.Println("ошибка:", err)
-	} else {
-		fmt.Println("успех: книга возвращена")
-		fmt.Println(book1)
-	}
-
-	// Попытка вернуть книгу, которая уже в библиотеке
-	fmt.Println("--- Попытка вернуть книгу, которая уже в библиотеке ---")
-	if err := library.ReturnBookByID(1); err != nil {
-		fmt.Println("ошибка:", err)
-	} else {
-		fmt.Println("успех: книга возвращена")
-	}
+	return nil
 }

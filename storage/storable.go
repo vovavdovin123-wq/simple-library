@@ -1,4 +1,4 @@
-package main
+package storage
 
 // Storable — интерфейс для сохранения и загрузки данных.
 type Storable interface {

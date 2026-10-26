@@ -1,4 +1,4 @@
-package main
+package models
 
 import "fmt"
 
@@ -158,4 +158,11 @@ func (lib *Library) ListAllBooks() []*Book {
 		books = append(books, book)
 	}
 	return books
+}
+
+func (lib *Library) ReplaceBooks(books []*Book) {
+	lib.Books = make(map[int]*Book)
+	for _, book := range books {
+		lib.Books[book.ID] = book
+	}
 }
