@@ -1,29 +1,48 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
-	"os"
-
-	"github.com/vovavdovin123-wq/simple-library/cmd/cli"
-	"github.com/vovavdovin123-wq/simple-library/models"
-	"github.com/vovavdovin123-wq/simple-library/storage"
+	"net/http"
+	"time"
 )
 
-const dbFile = "books.json"
+type infoResponse struct {
+	Version    string `json:"version"`
+	ServerTime string `json:"server_time"`
+}
 
-func main() {
-	myLibrary, err := storage.LoadLibraryFromJSON(dbFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			fmt.Println("Файл данных не найден, создана новая библиотека.")
-			myLibrary = models.NewLibrary()
-		} else {
-			log.Fatalf("Ошибка при загрузке библиотеки: %v", err)
-		}
-	} else {
-		fmt.Println("Библиотека успешно загружена из файла.")
+func infoHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
 	}
 
-	cli.Run(myLibrary, dbFile)
+	response := infoResponse{
+		Version:    "1.0.0",
+		ServerTime: time.Now().Format(time.RFC3339),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Println("ошибка ответа:", err)
+	}
+}
+
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprint(w, "This page does not exist")
+}
+
+func main() {
+	http.HandleFunc("/api/v1/info", infoHandler)
+	http.HandleFunc("/notfound", notFoundHandler)
+
+	addr := ":8080"
+	fmt.Println("Сервер запущен на http://localhost" + addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		log.Fatal(err)
+	}
 }
