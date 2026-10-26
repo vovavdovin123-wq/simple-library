@@ -23,6 +23,13 @@ type Library struct {
 	Readers map[int]*Reader
 }
 
+func NewLibrary() *Library {
+	return &Library{
+		Books:   make(map[int]*Book),
+		Readers: make(map[int]*Reader),
+	}
+}
+
 func (b Book) String() string {
 	status := "в библиотеке"
 	if b.IsIssued && b.ReaderID != nil {
@@ -31,32 +38,37 @@ func (b Book) String() string {
 	return fmt.Sprintf("%s (%s, %d), статус %s", b.Title, b.Author, b.Year, status)
 }
 
-func (b *Book) IssueBook(reader *Reader) {
+func (b *Book) IssueBook(reader *Reader) error {
+	if reader == nil {
+		return fmt.Errorf("читатель не указан")
+	}
 	if b.IsIssued {
-		fmt.Printf("Книга %s уже кому-то выдана\n", b.Title)
-		return
+		return fmt.Errorf("книга %s уже выдана", b.Title)
 	}
 	if !reader.IsActive {
-		fmt.Printf("Читатель %s %s не активен и не может получить книгу.\n", reader.FirstName, reader.LastName)
-		return
+		return fmt.Errorf("читатель %s %s не активен", reader.FirstName, reader.LastName)
 	}
+
 	b.ReaderID = &reader.ID
 	b.IsIssued = true
-	fmt.Printf("Книга %s была выдана\n", b.Title)
+	return nil
 }
 
-func (b *Book) ReturnBook() {
+func (b *Book) ReturnBook() error {
 	if !b.IsIssued {
-		fmt.Printf("Книга %s и так в библиотеке\n", b.Title)
-		return
+		return fmt.Errorf("книга %s уже в библиотеке", b.Title)
 	}
+
 	b.ReaderID = nil
 	b.IsIssued = false
-	fmt.Printf("Книга %s возвращена в библиотеку\n", b.Title)
+	return nil
 }
 
-func (r *Reader) AssignBook(book *Book) {
-	fmt.Printf("Читатель %s %s взял книгу %s\n", r.FirstName, r.LastName, book.String())
+func (r *Reader) AssignBook(book *Book) error {
+	if book == nil {
+		return fmt.Errorf("книга не указана")
+	}
+	return book.IssueBook(r)
 }
 
 func (r *Reader) Deactivate() {
@@ -71,34 +83,79 @@ func (r Reader) String() string {
 	return fmt.Sprintf("%s %s (ID %d), %s", r.FirstName, r.LastName, r.ID, status)
 }
 
-func (lib *Library) FindBookByID(id int) (*Book, bool) {
+func (lib *Library) AddBook(book *Book) error {
+	if book == nil {
+		return fmt.Errorf("книга не указана")
+	}
+
+	for _, existing := range lib.Books {
+		if existing.Title == book.Title && existing.Author == book.Author {
+			return fmt.Errorf("книга уже есть в библиотеке: %s (%s)", book.Title, book.Author)
+		}
+	}
+
+	if _, exists := lib.Books[book.ID]; exists {
+		return fmt.Errorf("книга с ID %d уже есть", book.ID)
+	}
+
+	lib.Books[book.ID] = book
+	return nil
+}
+
+func (lib *Library) AddReader(reader *Reader) error {
+	if reader == nil {
+		return fmt.Errorf("читатель не указан")
+	}
+	if _, exists := lib.Readers[reader.ID]; exists {
+		return fmt.Errorf("читатель с ID %d уже есть", reader.ID)
+	}
+
+	lib.Readers[reader.ID] = reader
+	return nil
+}
+
+func (lib *Library) FindBookByID(id int) (*Book, error) {
 	book, ok := lib.Books[id]
-	return book, ok
+	if !ok {
+		return nil, fmt.Errorf("книга с ID %d не найдена", id)
+	}
+	return book, nil
 }
 
-func (lib *Library) FindReaderByID(id int) (*Reader, bool) {
+func (lib *Library) FindReaderByID(id int) (*Reader, error) {
 	reader, ok := lib.Readers[id]
-	return reader, ok
+	if !ok {
+		return nil, fmt.Errorf("читатель с ID %d не найден", id)
+	}
+	return reader, nil
 }
 
-func (lib *Library) IssueBookToReader(bookID int, readerID int) {
-	book, ok := lib.FindBookByID(bookID)
-	if !ok {
-		fmt.Println("Книга не найдена")
-		return
+func (lib *Library) IssueBookToReader(bookID int, readerID int) error {
+	book, err := lib.FindBookByID(bookID)
+	if err != nil {
+		return err
 	}
 
-	reader, ok := lib.FindReaderByID(readerID)
-	if !ok {
-		fmt.Println("Читатель не найден")
-		return
+	reader, err := lib.FindReaderByID(readerID)
+	if err != nil {
+		return err
 	}
 
-	book.IssueBook(reader)
+	return book.IssueBook(reader)
 }
 
-func (lib *Library) ListAllBooks() {
+func (lib *Library) ReturnBookByID(bookID int) error {
+	book, err := lib.FindBookByID(bookID)
+	if err != nil {
+		return err
+	}
+	return book.ReturnBook()
+}
+
+func (lib *Library) ListAllBooks() []*Book {
+	books := make([]*Book, 0, len(lib.Books))
 	for _, book := range lib.Books {
-		fmt.Println(book)
+		books = append(books, book)
 	}
+	return books
 }
