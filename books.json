@@ -1,19 +1,4 @@
 {
-  "books": [
-    {
-      "id": 1,
-      "title": "Война и мир",
-      "author": "Лев Толстой",
-      "year": 1869,
-      "is_issued": false
-    }
-  ],
-  "readers": [
-    {
-      "id": 1,
-      "first_name": "Петр",
-      "last_name": "Петров",
-      "is_active": true
-    }
-  ]
+  "books": [],
+  "readers": []
 }

@@ -5,18 +5,18 @@ import (
 	"log"
 	"os"
 
-	"github.com/vovavdovin123-wq/simple-library/models"
+	"github.com/vovavdovin123-wq/simple-library/library"
 	"github.com/vovavdovin123-wq/simple-library/storage"
 )
 
-const dbFile = "books.json"
-
 func main() {
+	const dbFile = "books.json"
+
 	myLibrary, err := storage.LoadLibraryFromJSON(dbFile)
 	if err != nil {
 		if os.IsNotExist(err) {
 			fmt.Println("Файл данных не найден, создана новая библиотека.")
-			myLibrary = models.NewLibrary()
+			myLibrary = library.New()
 		} else {
 			log.Fatalf("Ошибка при загрузке библиотеки: %v", err)
 		}
