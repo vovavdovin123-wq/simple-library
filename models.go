@@ -70,3 +70,35 @@ func (r Reader) String() string {
 	}
 	return fmt.Sprintf("%s %s (ID %d), %s", r.FirstName, r.LastName, r.ID, status)
 }
+
+func (lib *Library) FindBookByID(id int) (*Book, bool) {
+	book, ok := lib.Books[id]
+	return book, ok
+}
+
+func (lib *Library) FindReaderByID(id int) (*Reader, bool) {
+	reader, ok := lib.Readers[id]
+	return reader, ok
+}
+
+func (lib *Library) IssueBookToReader(bookID int, readerID int) {
+	book, ok := lib.FindBookByID(bookID)
+	if !ok {
+		fmt.Println("Книга не найдена")
+		return
+	}
+
+	reader, ok := lib.FindReaderByID(readerID)
+	if !ok {
+		fmt.Println("Читатель не найден")
+		return
+	}
+
+	book.IssueBook(reader)
+}
+
+func (lib *Library) ListAllBooks() {
+	for _, book := range lib.Books {
+		fmt.Println(book)
+	}
+}

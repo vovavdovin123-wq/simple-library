@@ -5,14 +5,21 @@ import "fmt"
 func main() {
 	fmt.Println("Проект 'Простая библиотека' запущен.")
 
-	user1 := Reader{
+	user1 := &Reader{
 		ID:        1,
 		FirstName: "Петр",
 		LastName:  "Петров",
 		IsActive:  true,
 	}
 
-	book1 := Book{
+	user2 := &Reader{
+		ID:        2,
+		FirstName: "Sergey",
+		LastName:  "Meniaylo",
+		IsActive:  true,
+	}
+
+	book1 := &Book{
 		ID:       1,
 		Title:    "Война и мир",
 		Author:   "Лев Толстой",
@@ -20,35 +27,50 @@ func main() {
 		IsIssued: false,
 	}
 
+	book2 := &Book{
+		ID:       2,
+		Title:    "Преступление и наказание",
+		Author:   "Ф. Достоевский",
+		Year:     1866,
+		IsIssued: false,
+	}
+
+	book3 := &Book{
+		ID:       3,
+		Title:    "Мастер и Маргарита",
+		Author:   "М. Булгаков",
+		Year:     1967,
+		IsIssued: false,
+	}
+
 	library := Library{
-		Books:   map[int]*Book{book1.ID: &book1},
-		Readers: map[int]*Reader{user1.ID: &user1},
+		Books: map[int]*Book{
+			book1.ID: book1,
+			book2.ID: book2,
+			book3.ID: book3,
+		},
+		Readers: map[int]*Reader{
+			user1.ID: user1,
+			user2.ID: user2,
+		},
 	}
-	_ = library
 
-	book1.IssueBook(&user1)
-	fmt.Println(book1)
-	user1.AssignBook(&book1)
+	fmt.Println("--- Все книги ---")
+	library.ListAllBooks()
 
-	fmt.Println("---")
+	fmt.Println("--- Выдача книги ---")
+	library.IssueBookToReader(1, 1)
 
-	reader2 := Reader{
-		ID:        2,
-		FirstName: "Sergey",
-		LastName:  "Meniaylo",
-		IsActive:  true,
+	fmt.Println("--- Все книги после выдачи ---")
+	library.ListAllBooks()
+
+	fmt.Println("--- Поиск книги ---")
+	if book, ok := library.FindBookByID(2); ok {
+		fmt.Println(book)
 	}
-	book1.IssueBook(&reader2)
 
-	fmt.Println("---")
-
-	book1.ReturnBook()
-	fmt.Println(book1)
-
-	fmt.Println("---")
-
-	user1.Deactivate()
-	fmt.Println(user1)
-	fmt.Println("---")
-	book1.IssueBook(&user1)
+	fmt.Println("--- Поиск читателя ---")
+	if reader, ok := library.FindReaderByID(1); ok {
+		fmt.Println(reader)
+	}
 }
