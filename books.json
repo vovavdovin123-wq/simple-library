@@ -1,0 +1,19 @@
+{
+  "books": [
+    {
+      "id": 1,
+      "title": "????? ? ???",
+      "author": "??? ???????",
+      "year": 1869,
+      "is_issued": false
+    }
+  ],
+  "readers": [
+    {
+      "id": 1,
+      "first_name": "????",
+      "last_name": "??????",
+      "is_active": true
+    }
+  ]
+}

@@ -3,24 +3,24 @@ package models
 import "fmt"
 
 type Book struct {
-	ID       int
-	Title    string
-	Author   string
-	Year     int
-	IsIssued bool
-	ReaderID *int
+	ID       int    `json:"id"`
+	Title    string `json:"title"`
+	Author   string `json:"author"`
+	Year     int    `json:"year"`
+	IsIssued bool   `json:"is_issued"`
+	ReaderID *int   `json:"reader_id,omitempty"`
 }
 
 type Reader struct {
-	ID        int
-	FirstName string
-	LastName  string
-	IsActive  bool
+	ID        int    `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	IsActive  bool   `json:"is_active"`
 }
 
 type Library struct {
-	Books   map[int]*Book
-	Readers map[int]*Reader
+	Books   map[int]*Book   `json:"-"`
+	Readers map[int]*Reader `json:"-"`
 }
 
 func NewLibrary() *Library {
